@@ -4,6 +4,13 @@ import os
 import datetime
 from datetime import date
 import csv
+import pandas as pd
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
+from matplotlib import pyplot as plt
+from matplotlib import dates as mpl_dates
+from matplotlib.figure import Figure
+from datetime import datetime, timedelta
+import numpy as np
 
 
 # Molybdenum99:
@@ -49,13 +56,12 @@ class DataDisplay(tk.Frame):
         self.grid()
         self.create_widgets(parent)
 
-    @staticmethod
-    def create_widgets(parent):
+    def create_widgets(self, parent):
         print("Creating widgets... ")
 
         def save_data():
             # If radio button choice '1', Molybdenum-99:
-            if radiobuttons.get() == 1:
+            if self.radiobuttons.get() == 1:
                 # Creates path if it doesn't exist and saves station data per station, in CSV format.
                 save_path = './DataLog/Molybdenum99'
                 try:
@@ -65,7 +71,7 @@ class DataDisplay(tk.Frame):
                     # directory already exists
                     save(save_path)
 
-            if radiobuttons.get() == 2:
+            if self.radiobuttons.get() == 2:
                 # Creates path if it doesn't exist and saves station data per station, in CSV format.
                 save_path = './DataLog/Technetium99M'
                 try:
@@ -76,14 +82,14 @@ class DataDisplay(tk.Frame):
                     save(save_path)
 
         def save(save_path):
-            string_date = '/'.join(calibration_date_entry.get())
+            string_date = '/'.join(self.calibration_date_entry.get())
             print(string_date)
 
-            unix_date = time.mktime(datetime.datetime.strptime(string_date, "%d/%m/%Y/%H/%M").timetuple())
-            d = {'ID': product_info.id_entry.get(),
-                 'production_company_name': product_info.company_name_entry.get(),
-                 'half_life': product_info.iso_half_life_value_label.get(),
-                 'initial_GBq': product_info.iso_initial_gbq_entry.get(),
+            unix_date = time.mktime(datetime.strptime(string_date, "%d/%m/%Y/%H/%M").timetuple())
+            d = {'ID': self.product_info.id_entry.get(),
+                 'production_company_name': self.product_info.company_name_entry.get(),
+                 'half_life': self.product_info.iso_half_life_value_label.get(),
+                 'initial_GBq': self.product_info.iso_initial_gbq_entry.get(),
                  'calibration_unix': unix_date,
                  'calibration_timestamp': string_date,
                  'save_date': date.today(),
@@ -101,84 +107,121 @@ class DataDisplay(tk.Frame):
                     print('file has headers, writing rows..')
 
         # Radio buttons frame
-        radiobuttons = Radiobuttons(parent)
-        radiobuttons.grid(column=1, row=0, sticky=tk.NE)
+        self.radiobuttons = Radiobuttons(parent, data_display=self)
+        self.radiobuttons.grid(column=1, row=0, sticky=tk.NE)
 
         # ID, calibration date, arrival date frame.
-        data_entry_frame = tk.Frame(parent, borderwidth=3, relief='ridge')
-        data_entry_frame.grid(column=0, row=0, sticky=tk.NE)
+        self.data_entry_frame = tk.Frame(parent, borderwidth=3, relief='ridge', width=300)
+        self.data_entry_frame.grid(column=0, row=0, sticky=tk.NE, ipady=6)
 
         # Producer info frame
-        product_info = ProductInfo(data_entry_frame)
-        product_info.pack(side=tk.TOP)
+
+        self.product_info = ProductInfo(self.data_entry_frame)
+        self.product_info.pack(side=tk.TOP)
 
         # Calibration date entry
-        calibration_date_entry = DateTimeEntry(data_entry_frame, "Calibration date:", 1, 1, 2019, 0, 0)
-        calibration_date_entry.pack(side=tk.TOP, anchor=tk.W, fill='x')
+        self.calibration_date_entry = DateTimeEntry(self.data_entry_frame, "Calibration date:", 1, 1, 2019, 0, 0)
+        self.calibration_date_entry.pack(side=tk.TOP, anchor=tk.W, fill='x')
         # Arrival date entry
-        arrival_date_entry = DateTimeEntry(data_entry_frame, "Arrival date:", 1, 1, 2019, 0, 0)
-        arrival_date_entry.pack(side=tk.TOP, anchor=tk.W, fill='x')
+        self.arrival_date_entry = DateTimeEntry(self.data_entry_frame, "Arrival date:", 1, 1, 2019, 0, 0)
+        self.arrival_date_entry.pack(side=tk.TOP, anchor=tk.W, fill='x')
         # Calibration date 'OK'
-        calibration_ok_button = tk.Button(data_entry_frame, text='Save to CSV', borderwidth=3, overrelief='sunken',
+        self.calibration_ok_button = tk.Button(self.data_entry_frame, text='Save to CSV', borderwidth=3, overrelief='sunken',
                                           command=lambda: save_data())
-        calibration_ok_button.pack(side=tk.TOP, anchor=tk.W, fill='x')
+        self.calibration_ok_button.pack(side=tk.TOP, anchor=tk.W, fill='both', expand=True)
+
+        print('Finished creating widgets.')
 
 
 class Radiobuttons(tk.Frame):
-    def __init__(self, parent):
+    def __init__(self, parent, data_display):
         super().__init__(parent)
+
+        # Inserts becquerel value to label
+        def insert_becquerel():
+            v = self.radio.get()
+            becquerel = 0
+            if v == 1:
+                becquerel = 26.83
+                print('half-life value of Holmium-166 is: ' + str(becquerel))
+            elif v == 2:
+                becquerel = 1771.68
+                print('half-life value of Iridium-192 is: ' + str(becquerel))
+            elif v == 3:
+                becquerel = 1425.12
+                print('half-life value of Jodium-125 is: ' + str(becquerel))
+            elif v == 4:
+                becquerel = 192.48
+                print('half-life value of Jodium-131 is: ' + str(becquerel))
+            elif v == 5:
+                becquerel = 159.36
+                print('half-life value of Lutetium-177 is: ' + str(becquerel))
+            elif v == 6:
+                becquerel = 65.94
+                print('half-life value of Molybdenum-99 is: ' + str(becquerel))
+            elif v == 7:
+                becquerel = 1212.00
+            elif v == 8:
+                becquerel = 6.01
+                print('half-life value of Technetium-99M is: ' + str(becquerel))
+            elif v == 9:
+                becquerel = 125.88
+                print('half-life value of Xenon-133 is: ' + str(becquerel))
+            elif v == 10:
+                becquerel = 63.84
+                print('half-life value of Yttrium-90 is: ' + str(becquerel))
+            # Temporarily sets the state on the label to 'normal', otherwise unable to insert() a string.
+            # After insert, sets state back to 'readonly'
+            data_display.product_info.iso_half_life_value_label.configure(state=tk.NORMAL)
+            data_display.product_info.iso_half_life_value_label.delete(0, 20)
+            data_display.product_info.iso_half_life_value_label.insert(0, becquerel)
+            data_display.product_info.iso_half_life_value_label.configure(state='readonly')
+
         # Setting border-width and border-type
         self.configure(borderwidth=3, relief='ridge')
         # Setting self.radio to be an integer for function use.
         self.radio = tk.IntVar()
         # Defining radio-buttons
-        rb = tk.Radiobutton(self, text='Molybdenum-99', variable=self.radio, value=1, indicatoron=0,
+        rb = tk.Radiobutton(self, text='Holmium-166', variable=self.radio, value=1, indicatoron=0,
                             width=15, overrelief='sunken',
-                            command=lambda: print('Radiobutton selected Molybdenum99M'))
+                            command=lambda: [print('Radiobutton selected Holmium-166'), insert_becquerel()])
         rb.pack(anchor=tk.W)
-        rb = tk.Radiobutton(self, text='Technetium-99M', variable=self.radio, value=2, indicatoron=0,
+        rb = tk.Radiobutton(self, text='Iridium-192', variable=self.radio, value=2, indicatoron=0,
                             width=15, overrelief='sunken',
-                            command=lambda: print('Radiobutton selected Technetium99M'))
+                            command=lambda: [print('Radiobutton selected Iridium-192'), insert_becquerel()])
         rb.pack(anchor=tk.W)
-        rb = tk.Radiobutton(self, text='Xenon-133', variable=self.radio, value=3, indicatoron=0,
+        rb = tk.Radiobutton(self, text='Jodium-125', variable=self.radio, value=3, indicatoron=0,
                             width=15, overrelief='sunken',
-                            command=lambda: print('Radiobutton selected Xenon-133'),
-                            state=tk.DISABLED)
+                            command=lambda: [print('Radiobutton selected Jodium-125'), insert_becquerel()])
         rb.pack(anchor=tk.W)
-        rb = tk.Radiobutton(self, text='Holmium-166', variable=self.radio, value=4, indicatoron=0,
+        rb = tk.Radiobutton(self, text='Jodium-131', variable=self.radio, value=4, indicatoron=0,
                             width=15, overrelief='sunken',
-                            command=lambda: print('Radiobutton selected Holmium-166'),
-                            state=tk.DISABLED)
+                            command=lambda: [print('Radiobutton selected Strontium-89'), insert_becquerel()])
         rb.pack(anchor=tk.W)
         rb = tk.Radiobutton(self, text='Lutetium-177', variable=self.radio, value=5, indicatoron=0,
                             width=15, overrelief='sunken',
-                            command=lambda: print('Radiobutton selected Lutetium-177'),
-                            state=tk.DISABLED)
+                            command=lambda: [print('Radiobutton selected Lutetium-177'), insert_becquerel()])
         rb.pack(anchor=tk.W)
-        rb = tk.Radiobutton(self, text='Jodium-125', variable=self.radio, value=6, indicatoron=0,
+
+        rb = tk.Radiobutton(self, text='Molybdenum-99', variable=self.radio, value=6, indicatoron=0,
                             width=15, overrelief='sunken',
-                            command=lambda: print('Radiobutton selected Jodium-125'),
-                            state=tk.DISABLED)
+                            command=lambda: [print('Radiobutton selected Molybdenum-99'), insert_becquerel()])
         rb.pack(anchor=tk.W)
-        rb = tk.Radiobutton(self, text='Iridium-192', variable=self.radio, value=7, indicatoron=0,
+        rb = tk.Radiobutton(self, text='Strontium-89', variable=self.radio, value=7, indicatoron=0,
                             width=15, overrelief='sunken',
-                            command=lambda: print('Radiobutton selected Iridium-192'),
-                            state=tk.DISABLED)
+                            command=lambda: [print('Radiobutton selected Jodium-131'), insert_becquerel()])
         rb.pack(anchor=tk.W)
-        rb = tk.Radiobutton(self, text='Strontium-89', variable=self.radio, value=8, indicatoron=0,
+        rb = tk.Radiobutton(self, text='Technetium-99M', variable=self.radio, value=8, indicatoron=0,
                             width=15, overrelief='sunken',
-                            command=lambda: print('Radiobutton selected Jodium-131'),
-                            state=tk.DISABLED)
+                            command=lambda: [print('Radiobutton selected Technetium-99M'), insert_becquerel()])
         rb.pack(anchor=tk.W)
-        rb = tk.Radiobutton(self, text='Jodium-131', variable=self.radio, value=9, indicatoron=0,
+        rb = tk.Radiobutton(self, text='Xenon-133', variable=self.radio, value=9, indicatoron=0,
                             width=15, overrelief='sunken',
-                            command=lambda: print('Radiobutton selected Strontium-89'),
-                            state=tk.DISABLED)
+                            command=lambda: [print('Radiobutton selected Xenon-133'), insert_becquerel()])
         rb.pack(anchor=tk.W)
         rb = tk.Radiobutton(self, text='Yttrium-90', variable=self.radio, value=10, indicatoron=0,
                             width=15, overrelief='sunken',
-                            command=lambda: print('Radiobutton selected Yttrium-90'),
-                            state=tk.DISABLED)
+                            command=lambda: [print('Radiobutton selected Yttrium-90'), insert_becquerel()])
         rb.pack(side=tk.LEFT, anchor=tk.W)
 
     def get(self):
@@ -266,7 +309,7 @@ class ProductInfo(tk.Frame):
         self.id_entry_label = tk.Label(self, text='Isotope ID name:')
         self.id_entry = tk.Entry(self, text='Enter ID for the isotope to be saved:')
         self.iso_half_life_label = tk.Label(self, text='Half-life:')
-        self.iso_half_life_value_label = tk.Entry(self)
+        self.iso_half_life_value_label = tk.Entry(self, state='readonly')
         self.iso_initial_gbq_label = tk.Label(self, text='Initial Becquerel in GBq:')
         self.iso_initial_gbq_entry = tk.Entry(self)
 
@@ -289,8 +332,6 @@ class ProductInfo(tk.Frame):
     def get(self):
         return self.id_entry.get()
 
-
-print('Finished creating widgets.')
 
 if __name__ == "__main__":
     root = tk.Tk()
