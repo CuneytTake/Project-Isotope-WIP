@@ -161,6 +161,7 @@ class Radiobuttons(tk.Frame):
                 print('half-life value of Molybdenum-99 is: ' + str(becquerel))
             elif v == 7:
                 becquerel = 1212.00
+                print('half-life value of Strontium-89 is: ' + str(becquerel))
             elif v == 8:
                 becquerel = 6.01
                 print('half-life value of Technetium-99M is: ' + str(becquerel))
@@ -196,20 +197,19 @@ class Radiobuttons(tk.Frame):
         rb.pack(anchor=tk.W)
         rb = tk.Radiobutton(self, text='Jodium-131', variable=self.radio, value=4, indicatoron=0,
                             width=15, overrelief='sunken',
-                            command=lambda: [print('Radiobutton selected Strontium-89'), insert_becquerel()])
+                            command=lambda: [print('Radiobutton selected Jodium-131'), insert_becquerel()])
         rb.pack(anchor=tk.W)
         rb = tk.Radiobutton(self, text='Lutetium-177', variable=self.radio, value=5, indicatoron=0,
                             width=15, overrelief='sunken',
                             command=lambda: [print('Radiobutton selected Lutetium-177'), insert_becquerel()])
         rb.pack(anchor=tk.W)
-
         rb = tk.Radiobutton(self, text='Molybdenum-99', variable=self.radio, value=6, indicatoron=0,
                             width=15, overrelief='sunken',
                             command=lambda: [print('Radiobutton selected Molybdenum-99'), insert_becquerel()])
         rb.pack(anchor=tk.W)
         rb = tk.Radiobutton(self, text='Strontium-89', variable=self.radio, value=7, indicatoron=0,
                             width=15, overrelief='sunken',
-                            command=lambda: [print('Radiobutton selected Jodium-131'), insert_becquerel()])
+                            command=lambda: [print('Radiobutton selected Strontium-89'), insert_becquerel()])
         rb.pack(anchor=tk.W)
         rb = tk.Radiobutton(self, text='Technetium-99M', variable=self.radio, value=8, indicatoron=0,
                             width=15, overrelief='sunken',
