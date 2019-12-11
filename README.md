@@ -1,3 +1,3 @@
 # Project-Isotope
 application written in Python made for managing a nuclear medicine inventory.
-![Image of application](https://i.gyazo.com/0b1b5eae42c256e95eec91be77538826.png)
+![Image of application](https://i.gyazo.com/22ee6910c767f27cf53b68d2c0d4c30a.png)
