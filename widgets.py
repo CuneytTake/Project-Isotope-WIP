@@ -14,15 +14,27 @@ class ProductActualInfo(tk.Frame):
         # transport driver label and entry
         self.driver_name_label = tk.Label(self, text='Transport Driver name:', anchor=tk.W)
         self.driver_name_entry = tk.Entry(self, state='readonly')
-        # ID Entry and label for the isotope
+        # isotope entry and label
         self.id_entry_label = tk.Label(self, text='Isotope ID:')
         self.id_entry = tk.Entry(self, state='readonly')
+        # Isotope name entry and label
+        self.iso_name_label = tk.Label(self, text='Isotope name:')
+        self.iso_name_entry = tk.Entry(self, state='readonly')
         # isotope half life label and entry
         self.iso_half_life_label = tk.Label(self, text='Half-life:')
         self.iso_half_life_value_entry = tk.Entry(self, state='readonly')
         # isotope initial gbq label and entry
-        self.iso_initial_gbq_label = tk.Label(self, text='Initial Becquerel in mBQ:')
-        self.iso_initial_gbq_entry = tk.Entry(self, state='readonly')
+        self.iso_initial_mbq_label = tk.Label(self, text='Initial Becquerel in mBQ:')
+        self.iso_initial_mbq_entry = tk.Entry(self, state='readonly')
+        # calibration date label and entry
+        self.calibration_date_label = tk.Label(self, text='Calibration date(UTC):')
+        self.calibration_date_entry = tk.Entry(self, state='readonly')
+        # arrival date label and entry
+        self.arrival_date_label = tk.Label(self, text='Arrival date(UTC):')
+        self.arrival_date_entry = tk.Entry(self, state='readonly')
+        # current time when function is ran label and entry
+        self.time_on_load_label = tk.Label(self, text='Time on load(UTC):')
+        self.time_on_load_entry = tk.Entry(self, state='readonly')
         # isotope actual gbq value label and entry
         self.iso_actual_mbq_label = tk.Label(self, text='Actual mBQ: ')
         self.iso_actual_mbq_entry = tk.Entry(self, state='readonly')
@@ -32,18 +44,33 @@ class ProductActualInfo(tk.Frame):
         self.transport_company_label.grid(column=0, row=1, sticky=tk.W)
         self.driver_name_label.grid(column=0, row=2, sticky=tk.W)
         self.id_entry_label.grid(column=0, row=3, sticky=tk.W)
-        self.iso_initial_gbq_label.grid(column=0, row=4, sticky=tk.W)
+        self.iso_name_label.grid(column=0, row=4, sticky=tk.W)
         self.iso_half_life_label.grid(column=0, row=5, sticky=tk.W)
-        self.iso_actual_mbq_label.grid(column=0, row=6, sticky=tk.W)
+        self.calibration_date_label.grid(column=0, row=6, sticky=tk.W)
+        self.arrival_date_label.grid(column=0, row=7, sticky=tk.W)
+        self.time_on_load_label.grid(column=0, row=8, sticky=tk.W)
+        self.iso_initial_mbq_label.grid(column=0, row=9, sticky=tk.W)
+        self.iso_actual_mbq_label.grid(column=0, row=10, sticky=tk.W)
+
+
 
         # space management for entries
         self.company_name_entry.grid(column=1, row=0)
         self.transport_company_entry.grid(column=1, row=1)
         self.driver_name_entry.grid(column=1, row=2)
         self.id_entry.grid(column=1, row=3)
-        self.iso_initial_gbq_entry.grid(column=1, row=4)
+        self.iso_name_entry.grid(column=1, row=4)
         self.iso_half_life_value_entry.grid(column=1, row=5)
-        self.iso_actual_mbq_entry.grid(column=1, row=6)
+        self.calibration_date_entry.grid(column=1, row=6)
+        self.arrival_date_entry.grid(column=1, row=7)
+        self.time_on_load_entry.grid(column=1, row=8)
+        self.iso_initial_mbq_entry.grid(column=1, row=9)
+        self.iso_actual_mbq_entry.grid(column=1, row=10)
+
+        self.entries = [self.company_name_entry, self.transport_company_entry, self.driver_name_entry, self.id_entry,
+                        self.iso_half_life_value_entry, self.iso_initial_mbq_entry, self.iso_actual_mbq_entry,
+                        self.iso_name_entry, self.calibration_date_entry, self.arrival_date_entry,
+                        self.time_on_load_entry]
 
     def get(self):
         return self.id_entry.get()
@@ -69,7 +96,7 @@ class ProductInfo(tk.Frame):
         self.iso_initial_mbq_entry = tk.Entry(self)
         # isotope half life label and entry
         self.iso_half_life_label = tk.Label(self, text='Half-life:')
-        self.iso_half_life_value_label = tk.Entry(self, state='readonly')
+        self.iso_half_life_value_entry = tk.Entry(self, state='readonly')
 
         # space management for labels
         self.company_name_label.grid(column=0, row=0, sticky=tk.W)
@@ -84,7 +111,7 @@ class ProductInfo(tk.Frame):
         self.transport_company_entry.grid(column=1, row=1)
         self.driver_name_entry.grid(column=1, row=2)
         self.id_entry.grid(column=1, row=3)
-        self.iso_half_life_value_label.grid(column=1, row=5)
+        self.iso_half_life_value_entry.grid(column=1, row=5)
         self.iso_initial_mbq_entry.grid(column=1, row=4)
 
     def get(self):
@@ -214,12 +241,12 @@ class Radiobuttons(tk.Frame):
                 data_display.isotope_name = 'Yttrium-90'
                 print('half-life value of Yttrium-90 is: ' + str(initial_becquerel))
 
-            # Temporarily sets the state on the label to 'normal', otherwise unable to insert() a string.
+            # Temporarily sets the state on the entry to 'normal', otherwise unable to insert() a string.
             # After insert, sets state back to 'readonly'
-            data_display.product_info.iso_half_life_value_label.configure(state=tk.NORMAL)
-            data_display.product_info.iso_half_life_value_label.delete(0, 20)
-            data_display.product_info.iso_half_life_value_label.insert(0, initial_becquerel)
-            data_display.product_info.iso_half_life_value_label.configure(state='readonly')
+            data_display.product_info.iso_half_life_value_entry.configure(state=tk.NORMAL)
+            data_display.product_info.iso_half_life_value_entry.delete(0, 20)
+            data_display.product_info.iso_half_life_value_entry.insert(0, initial_becquerel)
+            data_display.product_info.iso_half_life_value_entry.configure(state='readonly')
 
         # Setting border-width and border-type
         self.configure(borderwidth=3, relief='ridge')

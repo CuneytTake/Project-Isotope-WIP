@@ -15,15 +15,16 @@ import numpy as np
 from widgets import Radiobuttons, DateTimeEntry, ProductInfo, ProductActualInfo
 
 
-# Molybdenum99:
 # #half life duration in hours
-# half_life = 66
+# half_life = 10
 #
 # # Initial GBq on production (10~370 GBq)
-# initial_GBq = 100
+# initial_MBq = 15000
 #
+# print(time.time())
 # # production time in hours
-# initial_time = time.time() / 3600
+# initial_time = 689946120 / 3600
+# print(initial_time)
 #
 # # def every(delay, task):
 # #
@@ -40,12 +41,14 @@ from widgets import Radiobuttons, DateTimeEntry, ProductInfo, ProductActualInfo
 # def calc_gbq():
 #     time_now = time.time() / 3600
 #     time_passed = time_now - initial_time
-#     current_GBq = initial_GBq * 0.5 ** (time_passed / half_life)
-#     print(current_GBq)
+#     print('hours passed:', time_passed)
+#     current_MBq = initial_MBq * 0.5 ** (time_passed / half_life)
+#     print(current_MBq)
 #
 # # Runs function on a seperate thread, every second.
 # calc_gbq()
 # # threading.Thread(target=lambda: every(1, calc_gbq)).start()
+
 
 
 class DataDisplay(tk.Frame):
@@ -64,8 +67,30 @@ class DataDisplay(tk.Frame):
         self.save_path = './DataLog/bin'
         self.isotope_name = 'None'
 
-        def load_data():
-            pass
+        def load_csv():
+            try:
+                import_file_path = tk.filedialog.askopenfilename(initialdir='./DataLog')
+                df = pd.read_csv(import_file_path)
+                print(df)
+
+                for e in self.actual_info.entries:
+                    e.configure(state=tk.NORMAL)
+                    e.delete(0, tk.END)
+                self.actual_info.company_name_entry.insert(0, string=df['production_company_name'][0])
+                self.actual_info.transport_company_entry.insert(0, string=df['transport_company_name'][0])
+                self.actual_info.driver_name_entry.insert(0, string=df['transport_driver_name'][0])
+                self.actual_info.id_entry.insert(0, string=df['ID'][0])
+                self.actual_info.iso_initial_mbq_entry.insert(0, string=df['initial_mBQ'][0])
+                self.actual_info.iso_half_life_value_entry.insert(0, string=df['half_life'][0])
+                self.actual_info.iso_name_entry.insert(0, string=df['isotope_name'][0])
+                self.actual_info.calibration_date_entry.insert(0, string=pd.to_datetime(df['calibration_unix'][0], unit='s').strftime('%d-%m-%Y %H:%M'))
+                self.actual_info.arrival_date_entry.insert(0, string=pd.to_datetime(df['arrival_unix'][0], unit='s').strftime('%d-%m-%Y %H:%M'))
+                self.actual_info.time_on_load_entry.insert(0, string=datetime.now().strftime('%d-%m-%Y %H:%M'))
+                self.actual_info.iso_actual_mbq_entry.insert(0, string='10000')
+                for e in self.actual_info.entries:
+                    e.configure(state='readonly')
+            except FileNotFoundError:
+                pass
 
         def save_data():
             save_path = self.save_path
@@ -79,19 +104,29 @@ class DataDisplay(tk.Frame):
                 save(save_path, isotope_name)
 
         def save(save_path, isotope_name):
-            string_date = '/'.join(self.calibration_date_entry.get())
-            print(string_date)
-
-            unix_date = time.mktime(datetime.strptime(string_date, "%d/%m/%Y/%H/%M").timetuple())
-            d = {'isotope-name': isotope_name,
+            # pulling data from widget entries and joining them together with a '/' as delimiter.
+            calibrated_string_date = '/'.join(self.calibration_date_entry.get())
+            print(calibrated_string_date)
+            arrival_string_date = '/'.join(self.arrival_date_entry.get())
+            print(arrival_string_date)
+            # transforming joined string dates to unix dates.
+            calibrated_unix_date = time.mktime(datetime.strptime(calibrated_string_date, "%d/%m/%Y/%H/%M").timetuple())
+            arrival_unix_date = time.mktime(datetime.strptime(arrival_string_date, '%d/%m/%Y/%H/%M').timetuple())
+            # setting dict to be saved to csv file.
+            d = {'isotope_name': isotope_name,
                  'ID': self.product_info.id_entry.get(),
                  'production_company_name': self.product_info.company_name_entry.get(),
-                 'half_life': self.product_info.iso_half_life_value_label.get(),
+                 'transport_company_name': self.product_info.transport_company_entry.get(),
+                 'transport_driver_name': self.product_info.driver_name_entry.get(),
+                 'half_life': self.product_info.iso_half_life_value_entry.get(),
                  'initial_mBQ': self.product_info.iso_initial_mbq_entry.get(),
-                 'calibration_unix': unix_date,
-                 'calibration_timestamp': string_date,
+                 'calibration_unix': calibrated_unix_date,
+                 'calibration_timestamp': calibrated_string_date,
+                 'arrival_unix': arrival_unix_date,
+                 'arrival_timestamp': arrival_string_date,
                  'save_date': date.today(),
                  }
+            # joins save_path, 'ID' and today's date to be used as file name.
             file_name = os.path.join(save_path, d['ID'] + ' ' + str(date.today()))
             if os.path.exists(file_name):
                 print('test')
@@ -108,7 +143,7 @@ class DataDisplay(tk.Frame):
 
         """ Registration frame """
         # ID, calibration date, arrival date frame.
-        self.data_entry_frame = tk.Frame(parent, borderwidth=3, relief='ridge', width=300)
+        self.data_entry_frame = tk.Frame(parent, borderwidth=3, relief='ridge')
         self.data_entry_frame.grid(column=0, row=0, sticky=tk.NE, ipady=6)
 
         # Radio buttons frame
@@ -120,11 +155,11 @@ class DataDisplay(tk.Frame):
         self.product_info.pack(side=tk.TOP)
 
         # Calibration date entry
-        self.calibration_date_entry = DateTimeEntry(self.data_entry_frame, "Calibration date:")
+        self.calibration_date_entry = DateTimeEntry(self.data_entry_frame, "Calibration date(UTC):")
         self.calibration_date_entry.pack(side=tk.TOP, anchor=tk.W, fill='x')
 
         # Arrival date entry
-        self.arrival_date_entry = DateTimeEntry(self.data_entry_frame, "Arrival date:")
+        self.arrival_date_entry = DateTimeEntry(self.data_entry_frame, "Arrival date(UTC):")
         self.arrival_date_entry.pack(side=tk.TOP, anchor=tk.W, fill='x')
         # save button
         self.save_button = tk.Button(self.data_entry_frame, text='Save', borderwidth=3,
@@ -138,22 +173,11 @@ class DataDisplay(tk.Frame):
         # Product actual info
         self.actual_info = ProductActualInfo(self.data_actual_info)
         self.actual_info.pack(side=tk.TOP)
-        # product calibration and arrival date info
-        self.calibration_date = DateTimeEntry(self.data_actual_info, "Calibration date: ")
-        self.calibration_date.pack(side=tk.TOP, anchor=tk.W, fill='x')
-        #
-        self.arrival_date = DateTimeEntry(self.data_actual_info, "Arrival date: ")
-        self.arrival_date.pack(side=tk.TOP, anchor=tk.W, fill='x')
-
-        for entry in self.calibration_date.entries:
-            entry.configure(state='readonly')
-        for entry in self.arrival_date.entries:
-            entry.configure(state='readonly')
 
         # load button
         self.load_button = tk.Button(self.data_actual_info, text='Load', borderwidth=3,
                                      overrelief='sunken',
-                                     command=None)
+                                     command=load_csv)
         self.load_button.pack(side=tk.BOTTOM, fill='x')
 
         print('Finished creating widgets.')
