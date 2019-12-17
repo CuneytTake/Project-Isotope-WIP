@@ -13,42 +13,9 @@ from matplotlib.figure import Figure
 from datetime import datetime, timedelta
 import numpy as np
 from widgets import Radiobuttons, DateTimeEntry, ProductInfo, ProductActualInfo
-
-
-# #half life duration in hours
-# half_life = 10
-#
-# # Initial GBq on production (10~370 GBq)
-# initial_MBq = 15000
-#
-# print(time.time())
-# # production time in hours
-# initial_time = 689946120 / 3600
-# print(initial_time)
-#
-# # def every(delay, task):
-# #
-# #     next_time = time.time() + delay
-# #     while True:
-# #         time.sleep(max(0, next_time - time.time()))
-# #         try:
-# #             task()
-# #         except Exception:
-# #             traceback.print_exc()
-# #         # skip tasks if we are behind schedule:
-# #         next_time += (time.time() - next_time) // delay * delay + delay
-#
-# def calc_gbq():
-#     time_now = time.time() / 3600
-#     time_passed = time_now - initial_time
-#     print('hours passed:', time_passed)
-#     current_MBq = initial_MBq * 0.5 ** (time_passed / half_life)
-#     print(current_MBq)
-#
-# # Runs function on a seperate thread, every second.
-# calc_gbq()
-# # threading.Thread(target=lambda: every(1, calc_gbq)).start()
-
+import threading
+import traceback
+import sys
 
 
 class DataDisplay(tk.Frame):
@@ -68,14 +35,42 @@ class DataDisplay(tk.Frame):
         self.isotope_name = 'None'
 
         def load_csv():
+
+            def every(delay, task):
+                # updates current mbq every second
+                next_time = time.time() + delay
+                while True:
+                    time.sleep(max(0, next_time - time.time()))
+                    try:
+                        task()
+                    except RuntimeError:
+                        sys.exit()
+                    # skip tasks if we are behind schedule:
+                    next_time += (time.time() - next_time) // delay * delay + delay
+
+            def calc_bq():
+                # calculates the current Becquerel value based on data stored in the csv-file.
+                time_now = time.time() / 3600
+                time_passed = time_now - df['calibration_unix'][0] / 3600
+                print('hours passed:', time_passed)
+                current_mbq = round(df['initial_mBQ'][0] * 0.5 ** (time_passed / df['half_life'][0]))
+
+                self.actual_info.iso_actual_mbq_entry.configure(state=tk.NORMAL)
+                self.actual_info.iso_actual_mbq_entry.delete(0, tk.END)
+                self.actual_info.iso_actual_mbq_entry.insert(0, string=current_mbq)
+                self.actual_info.iso_actual_mbq_entry.configure(state='readonly')
+
             try:
                 import_file_path = tk.filedialog.askopenfilename(initialdir='./DataLog')
                 df = pd.read_csv(import_file_path)
                 print(df)
-
+                calc_bq()
+                # modifies the widget state to 'normal' from 'readonly' to allow string insertion.
                 for e in self.actual_info.entries:
                     e.configure(state=tk.NORMAL)
                     e.delete(0, tk.END)
+
+                # inserts csv data to entries
                 self.actual_info.company_name_entry.insert(0, string=df['production_company_name'][0])
                 self.actual_info.transport_company_entry.insert(0, string=df['transport_company_name'][0])
                 self.actual_info.driver_name_entry.insert(0, string=df['transport_driver_name'][0])
@@ -83,10 +78,17 @@ class DataDisplay(tk.Frame):
                 self.actual_info.iso_initial_mbq_entry.insert(0, string=df['initial_mBQ'][0])
                 self.actual_info.iso_half_life_value_entry.insert(0, string=df['half_life'][0])
                 self.actual_info.iso_name_entry.insert(0, string=df['isotope_name'][0])
+                # insert csv data to date entry and transforms the unix timestamp to realtime.
                 self.actual_info.calibration_date_entry.insert(0, string=pd.to_datetime(df['calibration_unix'][0], unit='s').strftime('%d-%m-%Y %H:%M'))
                 self.actual_info.arrival_date_entry.insert(0, string=pd.to_datetime(df['arrival_unix'][0], unit='s').strftime('%d-%m-%Y %H:%M'))
                 self.actual_info.time_on_load_entry.insert(0, string=datetime.now().strftime('%d-%m-%Y %H:%M'))
-                self.actual_info.iso_actual_mbq_entry.insert(0, string='10000')
+                # inserts a placeholder to be modified later on.
+                self.actual_info.iso_actual_mbq_entry.insert(0, string='Calculating...')
+
+                # starts the calc_bq function and runs the function every second on a separate thread
+                calc_bq()
+                threading.Thread(target=lambda: every(1, calc_bq)).start()
+                # re-assigns the readonly state to every widget to prevent user input
                 for e in self.actual_info.entries:
                     e.configure(state='readonly')
             except FileNotFoundError:

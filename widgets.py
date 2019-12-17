@@ -2,6 +2,7 @@
 
 import tkinter as tk
 
+
 class ProductActualInfo(tk.Frame):
     def __init__(self, parent):
         super().__init__(parent)
@@ -51,8 +52,6 @@ class ProductActualInfo(tk.Frame):
         self.time_on_load_label.grid(column=0, row=8, sticky=tk.W)
         self.iso_initial_mbq_label.grid(column=0, row=9, sticky=tk.W)
         self.iso_actual_mbq_label.grid(column=0, row=10, sticky=tk.W)
-
-
 
         # space management for entries
         self.company_name_entry.grid(column=1, row=0)
@@ -186,6 +185,7 @@ class DateTimeEntry(tk.Frame):
 class Radiobuttons(tk.Frame):
     def __init__(self, parent, data_display):
         super().__init__(parent)
+
         # Inserts becquerel value to label
         def insert_becquerel():
             v = self.radio.get()
